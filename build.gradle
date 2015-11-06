@@ -32,11 +32,18 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
     compile 'io.grpc:grpc-all:0.9.0'
+
+    compile 'org.slf4j:slf4j-api:1.7.12'
+    compile 'ch.qos.logback:logback-classic:1.1.3'
+
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
+    main.java.srcDirs += 'src/generated/main/java'
+    main.java.srcDirs += 'src/generated/main/grpc'
 }
 
 protobuf {
