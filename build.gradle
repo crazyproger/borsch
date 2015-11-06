@@ -56,6 +56,7 @@ protobuf {
             grpc {}
         }
     }
+    generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
 // At a test failure, log the stack trace to the console so that we don't
