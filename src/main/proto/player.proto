@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package borsch;
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "net.crazyproger.borsch.rpc.player";
+option java_outer_classname = "PlayerProto";
+
+service Player {
+  rpc Create (google.protobuf.Empty) returns (CreateResponse) {}
+}
+
+// The response message containing the greetings
+message CreateResponse {
+  int32 id=1;
+  string secret = 2;
+  int32 error = 3; // TODO find better way to notify about error
+}

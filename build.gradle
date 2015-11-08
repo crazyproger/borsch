@@ -50,6 +50,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testRuntime 'com.h2database:h2:1.4.190'
 }
+
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
     main.java.srcDirs += 'src/generated/main/java'
@@ -77,6 +78,12 @@ protobuf {
 }
 
 startScripts.enabled = false
+task borschServer(type: CreateStartScripts) {
+    mainClassName = "net.crazyproger.borsch.MainKt"
+    applicationName = "borsch-server"
+    outputDir = new File(project.buildDir, 'tmp')
+    classpath = jar.outputs.files + project.configurations.runtime
+}
 task helloWorldServer(type: CreateStartScripts) {
     mainClassName = "net.crazyproger.borsch.helloworld.HelloWorldServerKt"
     applicationName = "hello-world-server"
@@ -90,6 +97,7 @@ task helloWorldClient(type: CreateStartScripts) {
     classpath = jar.outputs.files + project.configurations.runtime
 }
 applicationDistribution.into("bin") {
+    from(borschServer)
     from(helloWorldServer)
     from(helloWorldClient)
     fileMode = 0755
