@@ -2,11 +2,13 @@ package net.crazyproger.borsch
 
 import io.grpc.Server
 import io.grpc.ServerBuilder
-import net.crazyproger.borsch.entity.ItemTable
-import net.crazyproger.borsch.entity.ItemType
-import net.crazyproger.borsch.entity.PlayerTable
+import io.grpc.ServerInterceptors
+import net.crazyproger.borsch.entity.TABLES
+import net.crazyproger.borsch.rpc.IdentificationInterceptor
 import net.crazyproger.borsch.rpc.PlayerService
-import net.crazyproger.borsch.rpc.player.PlayerGrpc
+import net.crazyproger.borsch.rpc.ProfileCreateService
+import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
+import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -29,6 +31,7 @@ class App {
     fun start() {
 
         initDb()
+        // todo load config from database
         startGrpc()
 
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
@@ -44,7 +47,7 @@ class App {
             load(classpathStream("/database-test.properties") ?: classpathStream("/database.properties"))
             val database = Database.connect(getProperty("url"), getProperty("driver"), getProperty("user", ""), getProperty("password", ""))
             database.withSession {
-                createMissingTablesAndColumns(PlayerTable, ItemType, ItemTable)
+                createMissingTablesAndColumns(*TABLES)
             }
             _database = database
         }
@@ -53,8 +56,12 @@ class App {
     private fun classpathStream(path: String) = this@App.javaClass.getResourceAsStream(path)
 
     private fun startGrpc() {
+        val createDefinition = ProfileCreateServiceGrpc.bindService(ProfileCreateService())
+        val playerDefinition = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerService())
+                , IdentificationInterceptor(database))
         server = ServerBuilder.forPort(port)
-                .addService(PlayerGrpc.bindService(PlayerService()))
+                .addService(createDefinition)
+                .addService(playerDefinition)
                 .build().start()
         log.info("Server started, listening on " + port)
     }

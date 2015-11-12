@@ -2,8 +2,10 @@ package net.crazyproger.borsch.entity
 
 import kotlin.dao.IdTable
 
+val TABLES = arrayOf(PlayerTable, ItemTable, ItemType)
+
 object PlayerTable : IdTable() {
-    val name = varchar("name", 255)
+    val name = varchar("name", 255).index(true).nullable()
     val secret = varchar("secret", 1024)
     val money = integer("money")
 }
