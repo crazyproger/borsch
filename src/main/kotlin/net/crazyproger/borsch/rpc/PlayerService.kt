@@ -8,27 +8,20 @@ import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequest
 import net.crazyproger.borsch.rpc.player.RenameResponse
 import net.crazyproger.borsch.rpc.player.ShortInfo
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.sql.SQLException
 import kotlin.dao.EntityID
 import kotlin.sql.select
 import kotlin.sql.update
 
 class PlayerService : PlayerServiceGrpc.PlayerService {
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(PlayerService::class.java)
-    }
 
     // todo think: simple, but not so flexible as with provider
     private val playerId: Int by PlayerIdProvider
 
     override fun info(request: Empty?, responseObserver: StreamObserver<ShortInfo>) {
-        log.debug("info request") // todo logging interceptor
         val info = shortInfo()
         responseObserver.onNext(info)
         responseObserver.onCompleted()
-        log.debug("info request end")
     }
 
     private fun shortInfo(): ShortInfo {
@@ -41,7 +34,6 @@ class PlayerService : PlayerServiceGrpc.PlayerService {
     }
 
     override fun rename(request: RenameRequest, responseObserver: StreamObserver<RenameResponse>) {
-        log.debug("rename request")
         val name = request.name ?: throw IllegalArgumentException("bad request") //todo validation, exception to status
         if (name.startsWith("Player")) {
             responseObserver.onNext(RenameResponse.newBuilder().setError(RenameResponse.Error.RESTRICTED).build())
@@ -67,7 +59,6 @@ class PlayerService : PlayerServiceGrpc.PlayerService {
         val response = RenameResponse.newBuilder().setInfo(shortInfo()).build()
         responseObserver.onNext(response)
         responseObserver.onCompleted()
-        log.debug("rename request end")
     }
 }
 

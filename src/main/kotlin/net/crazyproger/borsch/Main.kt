@@ -5,6 +5,7 @@ import io.grpc.ServerBuilder
 import io.grpc.ServerInterceptors
 import net.crazyproger.borsch.entity.TABLES
 import net.crazyproger.borsch.rpc.IdentificationInterceptor
+import net.crazyproger.borsch.rpc.LoggingInterceptor
 import net.crazyproger.borsch.rpc.PlayerService
 import net.crazyproger.borsch.rpc.ProfileCreateService
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
@@ -56,9 +57,10 @@ class App {
     private fun classpathStream(path: String) = this@App.javaClass.getResourceAsStream(path)
 
     private fun startGrpc() {
-        val createDefinition = ProfileCreateServiceGrpc.bindService(ProfileCreateService())
+        val createDefinition = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateService())
+                , LoggingInterceptor)
         val playerDefinition = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerService())
-                , IdentificationInterceptor(database))
+                , IdentificationInterceptor(database), LoggingInterceptor)
         server = ServerBuilder.forPort(port)
                 .addService(createDefinition)
                 .addService(playerDefinition)
