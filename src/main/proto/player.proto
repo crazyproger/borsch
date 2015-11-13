@@ -17,7 +17,6 @@ service PlayerService {
   rpc Rename (RenameRequest) returns (RenameResponse) {}
 }
 
-// The response message containing the greetings
 message CreateResponse {
   ShortInfo info = 1;
   string secret = 2;
