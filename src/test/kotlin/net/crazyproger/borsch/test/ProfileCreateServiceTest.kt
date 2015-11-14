@@ -32,12 +32,12 @@ class ProfileCreateServiceTest {
         assert(response.info.id > 0)
         assert(response.secret.isNotEmpty())
 
-        val inserted = App.database.withSession {
-            val select = PlayerTable.select { PlayerTable.id eq EntityID(response.info.id, PlayerTable) }
-            select.firstOrNull()?.get(PlayerTable.secret)
-
+        val (insertedSecret, name) = App.database.withSession {
+            val row = PlayerTable.select { PlayerTable.id eq EntityID(response.info.id, PlayerTable) }.first()
+            row[PlayerTable.secret] to row[PlayerTable.name]
         }
-        assertEquals(inserted, response.secret)
+        assertEquals(insertedSecret, response.secret)
+        assertEquals(name, "Player ${response.info.id}")
     }
 
     @After fun tearDown() {

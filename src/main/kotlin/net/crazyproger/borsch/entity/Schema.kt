@@ -2,7 +2,7 @@ package net.crazyproger.borsch.entity
 
 import kotlin.dao.IdTable
 
-val TABLES = arrayOf(PlayerTable, ItemTable, ItemType)
+val TABLES = arrayOf(PlayerTable, ItemTable, ItemTypeTable)
 
 object PlayerTable : IdTable() {
     val name = varchar("name", 255).index(true).nullable()
@@ -10,12 +10,12 @@ object PlayerTable : IdTable() {
     val money = integer("money")
 }
 
-object ItemType : IdTable() {
+object ItemTypeTable : IdTable() {
     val name = varchar("name", 255)
     val price = integer("price")
 }
 
 object ItemTable : IdTable() {
     val playerId = reference("player_id", PlayerTable)
-    val typeId = reference("type_id", ItemType)
+    val typeId = reference("type_id", ItemTypeTable)
 }

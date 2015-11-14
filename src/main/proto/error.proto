@@ -10,4 +10,5 @@ enum Error {
     UNKNOWN = 0;
     DUPLICATE_NAME = 1;
     RESTRICTED = 2;
+    NOT_FOUND = 3;
 }

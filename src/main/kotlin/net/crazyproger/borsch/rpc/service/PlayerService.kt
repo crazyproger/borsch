@@ -4,17 +4,14 @@ import com.google.protobuf.Empty
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
 import net.crazyproger.borsch.App
+import net.crazyproger.borsch.entity.Player
 import net.crazyproger.borsch.entity.PlayerTable
-import net.crazyproger.borsch.rpc.DuplicateNameException
-import net.crazyproger.borsch.rpc.PlayerIdProvider
-import net.crazyproger.borsch.rpc.RestrictedException
-import net.crazyproger.borsch.rpc.onCompleted
+import net.crazyproger.borsch.rpc.*
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequest
 import net.crazyproger.borsch.rpc.player.ShortInfo
 import java.sql.SQLException
 import kotlin.dao.EntityID
-import kotlin.sql.select
 import kotlin.sql.update
 
 class PlayerService : PlayerServiceGrpc.PlayerService {
@@ -26,12 +23,8 @@ class PlayerService : PlayerServiceGrpc.PlayerService {
             responseObserver.onCompleted(shortInfo())
 
     private fun shortInfo(): ShortInfo {
-        val builder = ShortInfo.newBuilder().setId(playerId)
-        App.database.withSession {
-            val row = PlayerTable.select { PlayerTable.id eq EntityID(playerId, PlayerTable) }.first()
-            builder.setMoney(row[PlayerTable.money]).setName(row[PlayerTable.name])
-        }
-        return builder.build()
+        val player = App.database.withSession { Player.findById(playerId) } ?: throw NotFoundException()
+        return ShortInfo.newBuilder().setId(playerId).setName(player.name).setMoney(player.money).build()
     }
 
     override fun rename(request: RenameRequest, responseObserver: StreamObserver<ShortInfo>) {
