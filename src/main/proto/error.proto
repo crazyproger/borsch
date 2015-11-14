@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package borsch;
+
+option java_package = "net.crazyproger.borsch.rpc";
+option java_outer_classname = "BusinessErrors";
+
+
+enum Error {
+    UNKNOWN = 0;
+    DUPLICATE_NAME = 1;
+    RESTRICTED = 2;
+}

@@ -4,12 +4,13 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.ServerInterceptors
 import net.crazyproger.borsch.entity.TABLES
+import net.crazyproger.borsch.rpc.BusinessExceptionInterceptor
 import net.crazyproger.borsch.rpc.IdentificationInterceptor
 import net.crazyproger.borsch.rpc.LoggingInterceptor
-import net.crazyproger.borsch.rpc.PlayerService
-import net.crazyproger.borsch.rpc.ProfileCreateService
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
+import net.crazyproger.borsch.rpc.service.PlayerService
+import net.crazyproger.borsch.rpc.service.ProfileCreateService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -58,15 +59,17 @@ class App {
 
     private fun startGrpc() {
         val createDefinition = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateService())
-                , LoggingInterceptor)
+                , *defaultInterceptors())
         val playerDefinition = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerService())
-                , IdentificationInterceptor(database), LoggingInterceptor)
+                , IdentificationInterceptor(database), *defaultInterceptors())
         server = ServerBuilder.forPort(port)
                 .addService(createDefinition)
                 .addService(playerDefinition)
                 .build().start()
         log.info("Server started, listening on " + port)
     }
+
+    private fun defaultInterceptors() = arrayOf(BusinessExceptionInterceptor, LoggingInterceptor)
 
     fun stop() = server?.shutdown()
 

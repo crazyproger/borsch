@@ -36,11 +36,20 @@ private fun log(method: MethodDescriptor<*, *>, call: ServerCall<*>, body: () ->
     }
 }
 
-class IdentificationInterceptor(val database: Database) : ServerInterceptor {
+object BusinessExceptionInterceptor : net.crazyproger.borsch.rpc.HalfCloseListenerInterceptor(::businessIntercept)
 
-    companion object {
-        val SECRET_ID_KEY: Metadata.Key<String> = Metadata.Key.of("secret_id", Metadata.ASCII_STRING_MARSHALLER)
+private fun businessIntercept(method: MethodDescriptor<*, *>, call: ServerCall<*>, body: () -> Unit): Unit {
+    try {
+        body()
+    } catch(e: BusinessException) {
+        val metadata = Metadata()
+        metadata.put(MetadataKeys.businessErrorCode, e.protoError.number)
+        call.close(Status.ABORTED, metadata)
+        log.trace("call {} finished with business error {}", method.fullMethodName, e.protoError)
     }
+}
+
+class IdentificationInterceptor(val database: Database) : ServerInterceptor {
 
     override fun <ReqT : Any?, RespT : Any?> interceptCall(method: MethodDescriptor<ReqT, RespT>?, call: ServerCall<RespT>, headers: Metadata, next: ServerCallHandler<ReqT, RespT>): ServerCall.Listener<ReqT>? {
         val originalListener = next.startCall(method, call, headers)
@@ -76,7 +85,7 @@ class IdentificationInterceptor(val database: Database) : ServerInterceptor {
     }
 
     private fun authenticate(metadata: Metadata): Int {
-        val secretId = metadata.get(SECRET_ID_KEY) ?: throw WrongCredentialsException("no id")
+        val secretId = metadata.get(MetadataKeys.secretId) ?: throw WrongCredentialsException("no id")
         return database.withSession {
             val row = PlayerTable.select { PlayerTable.secret eq secretId }.firstOrNull() ?: throw WrongCredentialsException("bad secret")
             row[PlayerTable.id].value

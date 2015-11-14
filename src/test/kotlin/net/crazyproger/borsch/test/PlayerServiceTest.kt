@@ -7,9 +7,10 @@ import io.grpc.ManagedChannelBuilder
 import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.PlayerTable
 import net.crazyproger.borsch.entity.TABLES
+import net.crazyproger.borsch.rpc.BusinessErrors
+import net.crazyproger.borsch.rpc.BusinessException
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequest
-import net.crazyproger.borsch.rpc.player.RenameResponse
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -19,6 +20,7 @@ import kotlin.properties.Delegates
 import kotlin.sql.insert
 import kotlin.sql.select
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class PlayerServiceTest {
 
@@ -56,15 +58,17 @@ class PlayerServiceTest {
     @Test fun test_rename() {
         val newName = "another name"
         val response = blockingStub!!.rename(RenameRequest.newBuilder().setName(newName).build())
-        assert(response.hasInfo())
-        assert(response.info.name == newName)
-        assert(response.info.id == playerId)
+        assert(response.name == newName)
+        assert(response.id == playerId)
         assertNameInDb(newName)
     }
 
     @Test fun test_restricted() {
-        val response = blockingStub!!.rename(RenameRequest.newBuilder().setName("Player 123").build())
-        assert(response.error == RenameResponse.Error.RESTRICTED)
+        assertBusinessError(BusinessErrors.Error.RESTRICTED) {
+            withBusinessError(blockingStub!!) {
+                rename(RenameRequest.newBuilder().setName("Player 123").build())
+            }
+        }
         assertNameInDb(firstName)
     }
 
@@ -77,9 +81,21 @@ class PlayerServiceTest {
             }
         }
 
-        val response = blockingStub!!.rename(RenameRequest.newBuilder().setName("duplicate").build())
-        assert(response.error == RenameResponse.Error.DUPLICATE_NAME)
+        assertBusinessError(BusinessErrors.Error.DUPLICATE_NAME) {
+            withBusinessError(blockingStub!!) {
+                rename(RenameRequest.newBuilder().setName("duplicate").build())
+            }
+        }
         assertNameInDb(firstName)
+    }
+
+    private fun assertBusinessError(expected: BusinessErrors.Error, case: () -> Unit) {
+        try {
+            case()
+            fail("case completed, but should not")
+        } catch (e: BusinessException) {
+            assertEquals(e.protoError, expected)
+        }
     }
 
     private fun assertNameInDb(newName: String) {

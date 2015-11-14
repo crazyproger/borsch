@@ -1,9 +1,10 @@
-package net.crazyproger.borsch.rpc
+package net.crazyproger.borsch.rpc.service
 
 import com.google.protobuf.Empty
 import io.grpc.stub.StreamObserver
 import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.PlayerTable
+import net.crazyproger.borsch.rpc.onCompleted
 import net.crazyproger.borsch.rpc.player.CreateResponse
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
 import net.crazyproger.borsch.rpc.player.ShortInfo
@@ -27,12 +28,11 @@ class ProfileCreateService : ProfileCreateServiceGrpc.ProfileCreateService {
         }
         App.database.withSession {
             PlayerTable.update({ PlayerTable.id eq EntityID(newId, PlayerTable) }) {
-                it[PlayerTable.name] = "Player $newId"
+                it[name] = "Player $newId"
             }
         }
         val info = ShortInfo.newBuilder(DEFAULT_SHORT_INFO).setId(newId).build()
         val builder = CreateResponse.newBuilder().setSecret(secretString).setInfo(info)
-        responseObserver.onNext(builder.build())
-        responseObserver.onCompleted()
+        responseObserver.onCompleted(builder.build())
     }
 }

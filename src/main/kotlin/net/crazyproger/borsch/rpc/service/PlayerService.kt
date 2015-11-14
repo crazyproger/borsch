@@ -1,12 +1,16 @@
-package net.crazyproger.borsch.rpc
+package net.crazyproger.borsch.rpc.service
 
 import com.google.protobuf.Empty
+import io.grpc.Status
 import io.grpc.stub.StreamObserver
 import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.PlayerTable
+import net.crazyproger.borsch.rpc.DuplicateNameException
+import net.crazyproger.borsch.rpc.PlayerIdProvider
+import net.crazyproger.borsch.rpc.RestrictedException
+import net.crazyproger.borsch.rpc.onCompleted
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequest
-import net.crazyproger.borsch.rpc.player.RenameResponse
 import net.crazyproger.borsch.rpc.player.ShortInfo
 import java.sql.SQLException
 import kotlin.dao.EntityID
@@ -18,11 +22,8 @@ class PlayerService : PlayerServiceGrpc.PlayerService {
     // todo think: simple, but not so flexible as with provider
     private val playerId: Int by PlayerIdProvider
 
-    override fun info(request: Empty?, responseObserver: StreamObserver<ShortInfo>) {
-        val info = shortInfo()
-        responseObserver.onNext(info)
-        responseObserver.onCompleted()
-    }
+    override fun info(request: Empty?, responseObserver: StreamObserver<ShortInfo>) =
+            responseObserver.onCompleted(shortInfo())
 
     private fun shortInfo(): ShortInfo {
         val builder = ShortInfo.newBuilder().setId(playerId)
@@ -33,12 +34,13 @@ class PlayerService : PlayerServiceGrpc.PlayerService {
         return builder.build()
     }
 
-    override fun rename(request: RenameRequest, responseObserver: StreamObserver<RenameResponse>) {
-        val name = request.name ?: throw IllegalArgumentException("bad request") //todo validation, exception to status
-        if (name.startsWith("Player")) {
-            responseObserver.onNext(RenameResponse.newBuilder().setError(RenameResponse.Error.RESTRICTED).build())
-            responseObserver.onCompleted()
-            return
+    override fun rename(request: RenameRequest, responseObserver: StreamObserver<ShortInfo>) {
+        // todo validation?
+        if (request.name.isNullOrBlank()) {
+            throw Status.INVALID_ARGUMENT.asException()
+        }
+        if (request.name.startsWith("Player")) {
+            throw RestrictedException()
         }
         try {
             App.database.withSession {
@@ -49,16 +51,12 @@ class PlayerService : PlayerServiceGrpc.PlayerService {
         } catch (e: SQLException) {
             // see org.h2.api.ErrorCode.DUPLICATE_KEY_1
             if (e.errorCode == 23505) {
-                responseObserver.onNext(RenameResponse.newBuilder().setError(RenameResponse.Error.DUPLICATE_NAME).build())
-                responseObserver.onCompleted()
-                return
+                throw DuplicateNameException()
             } else {
-                throw throw IllegalArgumentException(e)
+                throw IllegalArgumentException(e)
             }
         }
-        val response = RenameResponse.newBuilder().setInfo(shortInfo()).build()
-        responseObserver.onNext(response)
-        responseObserver.onCompleted()
+        responseObserver.onCompleted(shortInfo())
     }
 }
 
