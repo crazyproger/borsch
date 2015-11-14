@@ -5,17 +5,17 @@ import io.grpc.stub.StreamObserver
 import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.Player
 import net.crazyproger.borsch.rpc.onCompleted
-import net.crazyproger.borsch.rpc.player.CreateResponse
+import net.crazyproger.borsch.rpc.player.CreateResponseDto
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
-import net.crazyproger.borsch.rpc.player.ShortInfo
+import net.crazyproger.borsch.rpc.player.ShortInfoDto
 import java.util.*
 
-class ProfileCreateService : ProfileCreateServiceGrpc.ProfileCreateService {
+class ProfileCreateServiceImpl : ProfileCreateServiceGrpc.ProfileCreateService {
     companion object {
-        private val DEFAULT_SHORT_INFO: ShortInfo = ShortInfo.newBuilder().setMoney(10).setName("Player").build()
+        private val DEFAULT_SHORT_INFO: ShortInfoDto = ShortInfoDto.newBuilder().setMoney(10).setName("Player").build()
     }
 
-    override fun create(request: Empty?, responseObserver: StreamObserver<CreateResponse>) {
+    override fun create(request: Empty?, responseObserver: StreamObserver<CreateResponseDto>) {
         val secretString = UUID.randomUUID().toString()
         val id = App.database.withSession {
             val newPlayer = Player.new {
@@ -26,8 +26,8 @@ class ProfileCreateService : ProfileCreateServiceGrpc.ProfileCreateService {
             newPlayer.name = "Player $id"
             id
         }
-        val info = ShortInfo.newBuilder(DEFAULT_SHORT_INFO).setId(id).build()
-        val builder = CreateResponse.newBuilder().setSecret(secretString).setInfo(info)
+        val info = ShortInfoDto.newBuilder(DEFAULT_SHORT_INFO).setId(id).build()
+        val builder = CreateResponseDto.newBuilder().setSecret(secretString).setInfo(info)
         responseObserver.onCompleted(builder.build())
     }
 }

@@ -24,6 +24,7 @@ class ItemType(id: EntityID) : Entity(id) {
 
 class Item(id: EntityID) : Entity(id) {
     var type by ItemType referencedOn ItemTable.typeId
+    var playerId by ItemTable.playerId
 
     companion object : EntityClass<Item>(ItemTable)
 }

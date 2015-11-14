@@ -10,7 +10,7 @@ import net.crazyproger.borsch.entity.TABLES
 import net.crazyproger.borsch.rpc.BusinessErrors
 import net.crazyproger.borsch.rpc.BusinessException
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
-import net.crazyproger.borsch.rpc.player.RenameRequest
+import net.crazyproger.borsch.rpc.player.RenameRequestDto
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -57,7 +57,7 @@ class PlayerServiceTest {
 
     @Test fun test_rename() {
         val newName = "another name"
-        val response = blockingStub!!.rename(RenameRequest.newBuilder().setName(newName).build())
+        val response = blockingStub!!.rename(RenameRequestDto.newBuilder().setName(newName).build())
         assert(response.name == newName)
         assert(response.id == playerId)
         assertNameInDb(newName)
@@ -66,7 +66,7 @@ class PlayerServiceTest {
     @Test fun test_restricted() {
         assertBusinessError(BusinessErrors.Error.RESTRICTED) {
             withBusinessError(blockingStub!!) {
-                rename(RenameRequest.newBuilder().setName("Player 123").build())
+                rename(RenameRequestDto.newBuilder().setName("Player 123").build())
             }
         }
         assertNameInDb(firstName)
@@ -83,7 +83,7 @@ class PlayerServiceTest {
 
         assertBusinessError(BusinessErrors.Error.DUPLICATE_NAME) {
             withBusinessError(blockingStub!!) {
-                rename(RenameRequest.newBuilder().setName("duplicate").build())
+                rename(RenameRequestDto.newBuilder().setName("duplicate").build())
             }
         }
         assertNameInDb(firstName)

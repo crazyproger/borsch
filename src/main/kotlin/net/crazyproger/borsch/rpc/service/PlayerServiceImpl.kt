@@ -8,26 +8,26 @@ import net.crazyproger.borsch.entity.Player
 import net.crazyproger.borsch.entity.PlayerTable
 import net.crazyproger.borsch.rpc.*
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
-import net.crazyproger.borsch.rpc.player.RenameRequest
-import net.crazyproger.borsch.rpc.player.ShortInfo
+import net.crazyproger.borsch.rpc.player.RenameRequestDto
+import net.crazyproger.borsch.rpc.player.ShortInfoDto
 import java.sql.SQLException
 import kotlin.dao.EntityID
 import kotlin.sql.update
 
-class PlayerService : PlayerServiceGrpc.PlayerService {
+class PlayerServiceImpl : PlayerServiceGrpc.PlayerService {
 
     // todo think: simple, but not so flexible as with provider
     private val playerId: Int by PlayerIdProvider
 
-    override fun info(request: Empty?, responseObserver: StreamObserver<ShortInfo>) =
-            responseObserver.onCompleted(shortInfo())
+    override fun info(request: Empty?, responseObserver: StreamObserver<ShortInfoDto>) =
+            responseObserver.onCompleted(ShortInfoDto())
 
-    private fun shortInfo(): ShortInfo {
+    private fun ShortInfoDto(): ShortInfoDto {
         val player = App.database.withSession { Player.findById(playerId) } ?: throw NotFoundException()
-        return ShortInfo.newBuilder().setId(playerId).setName(player.name).setMoney(player.money).build()
+        return ShortInfoDto.newBuilder().setId(playerId).setName(player.name).setMoney(player.money).build()
     }
 
-    override fun rename(request: RenameRequest, responseObserver: StreamObserver<ShortInfo>) {
+    override fun rename(request: RenameRequestDto, responseObserver: StreamObserver<ShortInfoDto>) {
         // todo validation?
         if (request.name.isNullOrBlank()) {
             throw Status.INVALID_ARGUMENT.asException()
@@ -49,7 +49,7 @@ class PlayerService : PlayerServiceGrpc.PlayerService {
                 throw IllegalArgumentException(e)
             }
         }
-        responseObserver.onCompleted(shortInfo())
+        responseObserver.onCompleted(ShortInfoDto())
     }
 }
 

@@ -10,25 +10,25 @@ option java_outer_classname = "PlayerProto";
 option java_generate_equals_and_hash = true;
 
 service ProfileCreateService {
-  rpc Create (google.protobuf.Empty) returns (CreateResponse) {}
+  rpc Create (google.protobuf.Empty) returns (CreateResponseDto) {}
 }
 
 service PlayerService {
-  rpc Info (google.protobuf.Empty) returns (ShortInfo) {}
-  rpc Rename (RenameRequest) returns (ShortInfo) {}
+  rpc Info (google.protobuf.Empty) returns (ShortInfoDto) {}
+  rpc Rename (RenameRequestDto) returns (ShortInfoDto) {}
 }
 
-message CreateResponse {
-  ShortInfo info = 1;
+message CreateResponseDto {
+  ShortInfoDto info = 1;
   string secret = 2;
 }
 
-message ShortInfo {
+message ShortInfoDto {
   int32 id = 1;
   string name = 2;
   int32 money = 3;
 }
 
-message RenameRequest {
+message RenameRequestDto {
   string name = 1;
 }

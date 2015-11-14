@@ -9,8 +9,8 @@ import net.crazyproger.borsch.rpc.IdentificationInterceptor
 import net.crazyproger.borsch.rpc.LoggingInterceptor
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
-import net.crazyproger.borsch.rpc.service.PlayerService
-import net.crazyproger.borsch.rpc.service.ProfileCreateService
+import net.crazyproger.borsch.rpc.service.PlayerServiceImpl
+import net.crazyproger.borsch.rpc.service.ProfileCreateServiceImpl
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -58,9 +58,9 @@ class App {
     private fun classpathStream(path: String) = this@App.javaClass.getResourceAsStream(path)
 
     private fun startGrpc() {
-        val createDefinition = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateService())
+        val createDefinition = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateServiceImpl())
                 , *defaultInterceptors())
-        val playerDefinition = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerService())
+        val playerDefinition = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerServiceImpl())
                 , IdentificationInterceptor(database), *defaultInterceptors())
         server = ServerBuilder.forPort(port)
                 .addService(createDefinition)
