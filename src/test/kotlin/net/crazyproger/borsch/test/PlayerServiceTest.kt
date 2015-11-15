@@ -1,20 +1,14 @@
 package net.crazyproger.borsch.test
 
 import com.google.protobuf.Empty
-import io.grpc.ClientInterceptors
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
 import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.PlayerTable
-import net.crazyproger.borsch.entity.TABLES
 import net.crazyproger.borsch.rpc.BusinessErrors
 import net.crazyproger.borsch.rpc.BusinessException
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequestDto
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.util.*
 import kotlin.dao.EntityID
 import kotlin.properties.Delegates
 import kotlin.sql.insert
@@ -22,22 +16,15 @@ import kotlin.sql.select
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
-class PlayerServiceTest {
+class PlayerServiceTest : AbstractAppTest() {
 
-    var app: App? = null
-    var channel: ManagedChannel? = null
     var blockingStub: PlayerServiceGrpc.PlayerServiceBlockingStub? = null
-    var secretKey = UUID.randomUUID().toString();
     var playerId by Delegates.notNull<Int>()
     val firstName = "test name"
 
-    @Before fun init() {
-        app = App().apply { start() }
-
-        channel = ManagedChannelBuilder.forAddress("localhost", app!!.port)
-                .usePlaintext(true).build()
-        val intercepted = ClientInterceptors.intercept(channel, ClientIdentificationInterceptor(secretKey))
-        blockingStub = PlayerServiceGrpc.newBlockingStub(intercepted);
+    @Before override fun before() {
+        super.before()
+        blockingStub = PlayerServiceGrpc.newBlockingStub(withIdentityChannel);
         playerId = App.database.withSession {
             PlayerTable.insert { q ->
                 q[money] = 0
@@ -104,14 +91,6 @@ class PlayerServiceTest {
                 PlayerTable.select { PlayerTable.id eq EntityID(playerId, PlayerTable) }.first()[PlayerTable.name]
             }
             assertEquals(name, newName)
-        }
-    }
-
-    @After fun tearDown() {
-        app?.stop()
-        app?.blockUntilShutdown()
-        App.database.withSession {
-            drop(*TABLES)
         }
     }
 }

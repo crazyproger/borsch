@@ -7,10 +7,12 @@ import net.crazyproger.borsch.entity.TABLES
 import net.crazyproger.borsch.rpc.BusinessExceptionInterceptor
 import net.crazyproger.borsch.rpc.IdentificationInterceptor
 import net.crazyproger.borsch.rpc.LoggingInterceptor
+import net.crazyproger.borsch.rpc.item.TypesServiceGrpc
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
 import net.crazyproger.borsch.rpc.service.PlayerServiceImpl
 import net.crazyproger.borsch.rpc.service.ProfileCreateServiceImpl
+import net.crazyproger.borsch.rpc.service.TypesServiceImpl
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -58,13 +60,16 @@ class App {
     private fun classpathStream(path: String) = this@App.javaClass.getResourceAsStream(path)
 
     private fun startGrpc() {
-        val createDefinition = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateServiceImpl())
+        val createDef = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateServiceImpl())
                 , *defaultInterceptors())
-        val playerDefinition = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerServiceImpl())
+        val playerDef = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerServiceImpl())
                 , IdentificationInterceptor(database), *defaultInterceptors())
+        val typesDef = ServerInterceptors.intercept(TypesServiceGrpc.bindService(TypesServiceImpl())
+                , *defaultInterceptors())
         server = ServerBuilder.forPort(port)
-                .addService(createDefinition)
-                .addService(playerDefinition)
+                .addService(createDef)
+                .addService(playerDef)
+                .addService(typesDef)
                 .build().start()
         log.info("Server started, listening on " + port)
     }

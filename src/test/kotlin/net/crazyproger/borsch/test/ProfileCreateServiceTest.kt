@@ -1,34 +1,27 @@
 package net.crazyproger.borsch.test
 
 import com.google.protobuf.Empty
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
 import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.PlayerTable
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.dao.EntityID
+import kotlin.properties.Delegates
 import kotlin.sql.select
 import kotlin.test.assertEquals
 
-class ProfileCreateServiceTest {
+class ProfileCreateServiceTest : AbstractAppTest() {
 
-    var app: App? = null
-    var channel: ManagedChannel? = null
-    var blockingStub: ProfileCreateServiceGrpc.ProfileCreateServiceBlockingStub? = null
+    var blockingStub by Delegates.notNull<ProfileCreateServiceGrpc.ProfileCreateServiceBlockingStub>()
 
-    @Before fun init() {
-        app = App().apply { start() }
-
-        channel = ManagedChannelBuilder.forAddress("localhost", app!!.port)
-                .usePlaintext(true).build()
-        blockingStub = ProfileCreateServiceGrpc.newBlockingStub(channel);
+    @Before override fun before() {
+        super.before()
+        blockingStub = ProfileCreateServiceGrpc.newBlockingStub(rawChannel);
     }
 
     @Test fun test_create_player() {
-        val response = blockingStub!!.create(Empty.getDefaultInstance())
+        val response = blockingStub.create(Empty.getDefaultInstance())
         assert(response.info.id > 0)
         assert(response.secret.isNotEmpty())
 
@@ -38,14 +31,5 @@ class ProfileCreateServiceTest {
         }
         assertEquals(insertedSecret, response.secret)
         assertEquals(name, "Player ${response.info.id}")
-    }
-
-    @After fun tearDown() {
-        App.database.withSession {
-            drop(PlayerTable)
-            commit()
-        }
-        app?.stop()
-        app?.blockUntilShutdown()
     }
 }

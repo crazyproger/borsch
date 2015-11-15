@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package borsch;
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "net.crazyproger.borsch.rpc.item";
+option java_outer_classname = "ItemProto";
+option java_generate_equals_and_hash = true;
+
+service TypesService {
+    rpc Types(google.protobuf.Empty) returns (TypesDto) {}
+}
+
+service ItemsService {
+    rpc Buy(BuyRequestDto) returns (BuyResponseDto) {}
+    rpc All(google.protobuf.Empty) returns (ItemsDto) {}
+    rpc Sell(SellRequestDto) returns (SellResponseDto) {}
+}
+
+message ItemTypeDto {
+    int32 id = 1;
+    string name = 2;
+    int32 price = 3;
+}
+
+message TypesDto {
+    repeated ItemTypeDto type = 1;
+}
+
+message ItemDto {
+    int32 id = 1;
+    int32 type_id = 2;
+    int32 type_name = 3;
+    int32 sell_price = 4;
+}
+
+message ItemsDto {
+    repeated ItemDto item = 1;
+}
+
+message BuyRequestDto {
+    int32 type_id = 1;
+}
+
+message SellRequestDto {
+    int32 item_id = 1;
+}
+
+message BuyResponseDto {
+    ItemDto item = 1;
+    int32 money = 2;
+}
+
+message SellResponseDto {
+    int32 money = 1;
+}
