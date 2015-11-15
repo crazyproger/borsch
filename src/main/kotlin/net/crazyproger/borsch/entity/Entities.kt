@@ -3,7 +3,10 @@ package net.crazyproger.borsch.entity
 import kotlin.dao.Entity
 import kotlin.dao.EntityClass
 import kotlin.dao.EntityID
+import kotlin.sql.ColumnSet
+import kotlin.sql.JoinType
 import kotlin.sql.SizedIterable
+import kotlin.sql.join
 
 class Player(id: EntityID) : Entity(id) {
     var name by PlayerTable.name
@@ -24,7 +27,13 @@ class ItemType(id: EntityID) : Entity(id) {
 
 class Item(id: EntityID) : Entity(id) {
     var type by ItemType referencedOn ItemTable.typeId
+    var typeName by ItemTypeTable.name
+    var typeId by ItemTypeTable.id
+    var typePrice by ItemTypeTable.price
     var playerId by ItemTable.playerId
 
-    companion object : EntityClass<Item>(ItemTable)
+    companion object : EntityClass<Item>(ItemTable) {
+        override val dependsOnTables: ColumnSet
+            get() = table.join(ItemTypeTable, JoinType.INNER, ItemTable.typeId, ItemTypeTable.id)
+    }
 }

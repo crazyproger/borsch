@@ -7,9 +7,11 @@ import net.crazyproger.borsch.entity.TABLES
 import net.crazyproger.borsch.rpc.BusinessExceptionInterceptor
 import net.crazyproger.borsch.rpc.IdentificationInterceptor
 import net.crazyproger.borsch.rpc.LoggingInterceptor
+import net.crazyproger.borsch.rpc.item.ItemsServiceGrpc
 import net.crazyproger.borsch.rpc.item.TypesServiceGrpc
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
+import net.crazyproger.borsch.rpc.service.ItemsServiceImpl
 import net.crazyproger.borsch.rpc.service.PlayerServiceImpl
 import net.crazyproger.borsch.rpc.service.ProfileCreateServiceImpl
 import net.crazyproger.borsch.rpc.service.TypesServiceImpl
@@ -64,12 +66,15 @@ class App {
                 , *defaultInterceptors())
         val playerDef = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerServiceImpl())
                 , IdentificationInterceptor(database), *defaultInterceptors())
+        val itemsDef = ServerInterceptors.intercept(ItemsServiceGrpc.bindService(ItemsServiceImpl())
+                , IdentificationInterceptor(database), *defaultInterceptors())
         val typesDef = ServerInterceptors.intercept(TypesServiceGrpc.bindService(TypesServiceImpl())
                 , *defaultInterceptors())
         server = ServerBuilder.forPort(port)
                 .addService(createDef)
                 .addService(playerDef)
                 .addService(typesDef)
+                .addService(itemsDef)
                 .build().start()
         log.info("Server started, listening on " + port)
     }
