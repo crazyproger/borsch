@@ -4,7 +4,6 @@ import com.google.protobuf.Empty
 import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.PlayerTable
 import net.crazyproger.borsch.rpc.BusinessErrors
-import net.crazyproger.borsch.rpc.BusinessException
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequestDto
 import org.junit.Before
@@ -14,7 +13,6 @@ import kotlin.properties.Delegates
 import kotlin.sql.insert
 import kotlin.sql.select
 import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class PlayerServiceTest : AbstractAppTest() {
 
@@ -75,16 +73,6 @@ class PlayerServiceTest : AbstractAppTest() {
         }
         assertNameInDb(firstName)
     }
-
-    private fun assertBusinessError(expected: BusinessErrors.Error, case: () -> Unit) {
-        try {
-            case()
-            fail("case completed, but should not")
-        } catch (e: BusinessException) {
-            assertEquals(e.protoError, expected)
-        }
-    }
-
     private fun assertNameInDb(newName: String) {
         App.database.withSession {
             val name = App.database.withSession {

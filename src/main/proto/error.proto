@@ -11,4 +11,5 @@ enum Error {
     DUPLICATE_NAME = 1;
     RESTRICTED = 2;
     NOT_FOUND = 3;
+    NO_MONEY = 4;
 }
