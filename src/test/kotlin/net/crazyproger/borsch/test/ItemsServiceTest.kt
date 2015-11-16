@@ -9,12 +9,14 @@ import net.crazyproger.borsch.entity.PlayerTable
 import net.crazyproger.borsch.rpc.BusinessErrors
 import net.crazyproger.borsch.rpc.item.BuyRequestDto
 import net.crazyproger.borsch.rpc.item.ItemsServiceGrpc
+import net.crazyproger.borsch.rpc.item.SellRequestDto
 import org.junit.Before
 import org.junit.Test
 import kotlin.dao.EntityID
 import kotlin.properties.Delegates
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class ItemsServiceTest : AbstractAppTest() {
 
@@ -85,15 +87,32 @@ class ItemsServiceTest : AbstractAppTest() {
         App.database.withSession {
             val player = Player.findById(playerId)
             assertEquals(10, player!!.money)
-            assert(player.items.empty())
+            assertEquals(3, player.items.count())
         }
     }
 
     @Test fun test_valid_sell() {
-        throw NotImplementedError()
+        val response = service.sell(SellRequestDto.newBuilder().setItemId(3).build())
+        assertEquals(16, response.money)
+        App.database.withSession {
+            assertNull(Item.findById(3))
+        }
     }
 
     @Test fun test_restricted_sell() {
-        throw NotImplementedError()
+        val notMine = App.database.withSession {
+            val another = Player.new { name = "another"; money = 10; secret = "sec" }
+            Item.new { type = type1; playerId = another.id }.id.value
+        }
+        assertBusinessError(BusinessErrors.Error.NOT_FOUND) {
+            withBusinessError(service) {
+                sell(SellRequestDto.newBuilder().setItemId(notMine).build())
+            }
+        }
+        App.database.withSession {
+            val player = Player.findById(1)!!
+            assertEquals(10, player.money)
+            assertEquals(3, player.items.count())
+        }
     }
 }
