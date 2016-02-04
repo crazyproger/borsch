@@ -17,7 +17,7 @@ class TypesServiceTest : AbstractAppTest() {
     override fun before() {
         super.before()
         serviceBlockingStub = TypesServiceGrpc.newBlockingStub(rawChannel)
-        App.database.withSession {
+        App.database.transaction {
             1.until(count + 1).forEach { ItemType.new { name = "type $it"; price = it } }
         }
     }

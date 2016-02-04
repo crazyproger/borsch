@@ -11,7 +11,7 @@ import net.crazyproger.borsch.rpc.onCompleted
 
 class TypesServiceImpl : TypesServiceGrpc.TypesService {
     override fun types(request: Empty?, responseObserver: StreamObserver<TypesDto>) {
-        val all = App.database.withSession { ItemType.all().toList() }
+        val all = App.database.transaction { ItemType.all().toList() }
         val dtos = all.map { ItemTypeDto.newBuilder().setId(it.id.value).setName(it.name).setPrice(it.price).build() }
         val response = TypesDto.newBuilder().addAllType(dtos).build()
         responseObserver.onCompleted(response)

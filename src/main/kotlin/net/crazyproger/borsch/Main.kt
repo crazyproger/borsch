@@ -15,12 +15,12 @@ import net.crazyproger.borsch.rpc.service.ItemsServiceImpl
 import net.crazyproger.borsch.rpc.service.PlayerServiceImpl
 import net.crazyproger.borsch.rpc.service.ProfileCreateServiceImpl
 import net.crazyproger.borsch.rpc.service.TypesServiceImpl
+import org.jetbrains.exposed.sql.Database
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates
-import kotlin.sql.Database
 
 class App {
     companion object {
@@ -52,7 +52,7 @@ class App {
         Properties().apply {
             load(classpathStream("/database-test.properties") ?: classpathStream("/database.properties"))
             val database = Database.connect(getProperty("url"), getProperty("driver"), getProperty("user", ""), getProperty("password", ""))
-            database.withSession {
+            database.transaction {
                 createMissingTablesAndColumns(*TABLES)
             }
             _database = database

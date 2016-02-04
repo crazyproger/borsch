@@ -8,10 +8,10 @@ import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequestDto
 import org.junit.Before
 import org.junit.Test
-import kotlin.dao.EntityID
+import org.jetbrains.exposed.dao.EntityID
 import kotlin.properties.Delegates
-import kotlin.sql.insert
-import kotlin.sql.select
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import kotlin.test.assertEquals
 
 class PlayerServiceTest : AbstractAppTest() {
@@ -23,7 +23,7 @@ class PlayerServiceTest : AbstractAppTest() {
     @Before override fun before() {
         super.before()
         blockingStub = PlayerServiceGrpc.newBlockingStub(withIdentityChannel);
-        playerId = App.database.withSession {
+        playerId = App.database.transaction {
             PlayerTable.insert { q ->
                 q[money] = 0
                 q[name] = firstName
@@ -58,7 +58,7 @@ class PlayerServiceTest : AbstractAppTest() {
     }
 
     @Test fun test_duplicate() {
-        App.database.withSession {
+        App.database.transaction {
             PlayerTable.insert { q ->
                 q[money] = 0
                 q[name] = "duplicate"
@@ -74,8 +74,8 @@ class PlayerServiceTest : AbstractAppTest() {
         assertNameInDb(firstName)
     }
     private fun assertNameInDb(newName: String) {
-        App.database.withSession {
-            val name = App.database.withSession {
+        App.database.transaction {
+            val name = App.database.transaction {
                 PlayerTable.select { PlayerTable.id eq EntityID(playerId, PlayerTable) }.first()[PlayerTable.name]
             }
             assertEquals(name, newName)

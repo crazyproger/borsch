@@ -4,8 +4,8 @@ import io.grpc.*
 import net.crazyproger.borsch.entity.PlayerTable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.sql.Database
-import kotlin.sql.select
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.select
 
 open class HalfCloseListenerInterceptor(val body:
                                         (method: MethodDescriptor<*, *>, call: ServerCall<*>, () -> Unit) -> Unit
@@ -86,7 +86,7 @@ class IdentificationInterceptor(val database: Database) : ServerInterceptor {
 
     private fun authenticate(metadata: Metadata): Int {
         val secretId = metadata.get(MetadataKeys.secretId) ?: throw WrongCredentialsException("no id")
-        return database.withSession {
+        return database.transaction {
             val row = PlayerTable.select { PlayerTable.secret eq secretId }.firstOrNull() ?: throw WrongCredentialsException("bad secret")
             row[PlayerTable.id].value
         }

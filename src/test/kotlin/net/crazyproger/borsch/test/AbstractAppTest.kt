@@ -33,7 +33,7 @@ abstract class AbstractAppTest {
     @After fun after() {
         app?.stop()
         app?.blockUntilShutdown()
-        App.database.withSession {
+        App.database.transaction {
             drop(*TABLES)
         }
     }

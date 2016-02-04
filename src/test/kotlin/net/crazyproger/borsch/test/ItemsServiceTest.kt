@@ -12,7 +12,7 @@ import net.crazyproger.borsch.rpc.item.ItemsServiceGrpc
 import net.crazyproger.borsch.rpc.item.SellRequestDto
 import org.junit.Before
 import org.junit.Test
-import kotlin.dao.EntityID
+import org.jetbrains.exposed.dao.EntityID
 import kotlin.properties.Delegates
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -31,7 +31,7 @@ class ItemsServiceTest : AbstractAppTest() {
     @Before override fun before() {
         super.before()
         service = ItemsServiceGrpc.newBlockingStub(withIdentityChannel)
-        playerId = App.database.withSession {
+        playerId = App.database.transaction {
             Player.new {
                 name = "Player Test"
                 money = 10
@@ -39,7 +39,7 @@ class ItemsServiceTest : AbstractAppTest() {
             }.id.value
         }
 
-        App.database.withSession {
+        App.database.transaction {
             type1 = ItemType.new { name = "type 1"; price = 1 }.apply { ItemType.reload(this) }
             type2 = ItemType.new { name = "type 2"; price = 2 }.apply { ItemType.reload(this) }
             type3 = ItemType.new { name = "type 3"; price = 12 }.apply { ItemType.reload(this) }
@@ -69,7 +69,7 @@ class ItemsServiceTest : AbstractAppTest() {
         assertNotNull(response.item)
         assertEquals("type 1", response.item.typeName)
         assertEquals(0, response.item.sellPrice)
-        App.database.withSession {
+        App.database.transaction {
             val item = Item.findById(response.item.id)
             assertNotNull(item)
             assertEquals(playerId, item!!.playerId.value)
@@ -84,7 +84,7 @@ class ItemsServiceTest : AbstractAppTest() {
                 buy(BuyRequestDto.newBuilder().setTypeId(3).build())
             }
         }
-        App.database.withSession {
+        App.database.transaction {
             val player = Player.findById(playerId)
             assertEquals(10, player!!.money)
             assertEquals(3, player.items.count())
@@ -94,13 +94,13 @@ class ItemsServiceTest : AbstractAppTest() {
     @Test fun test_valid_sell() {
         val response = service.sell(SellRequestDto.newBuilder().setItemId(3).build())
         assertEquals(16, response.money)
-        App.database.withSession {
+        App.database.transaction {
             assertNull(Item.findById(3))
         }
     }
 
     @Test fun test_restricted_sell() {
-        val notMine = App.database.withSession {
+        val notMine = App.database.transaction {
             val another = Player.new { name = "another"; money = 10; secret = "sec" }
             Item.new { type = type1; playerId = another.id }.id.value
         }
@@ -109,7 +109,7 @@ class ItemsServiceTest : AbstractAppTest() {
                 sell(SellRequestDto.newBuilder().setItemId(notMine).build())
             }
         }
-        App.database.withSession {
+        App.database.transaction {
             val player = Player.findById(1)!!
             assertEquals(10, player.money)
             assertEquals(3, player.items.count())

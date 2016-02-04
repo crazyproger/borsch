@@ -6,9 +6,9 @@ import net.crazyproger.borsch.entity.PlayerTable
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
 import org.junit.Before
 import org.junit.Test
-import kotlin.dao.EntityID
+import org.jetbrains.exposed.dao.EntityID
 import kotlin.properties.Delegates
-import kotlin.sql.select
+import org.jetbrains.exposed.sql.select
 import kotlin.test.assertEquals
 
 class ProfileCreateServiceTest : AbstractAppTest() {
@@ -25,7 +25,7 @@ class ProfileCreateServiceTest : AbstractAppTest() {
         assert(response.info.id > 0)
         assert(response.secret.isNotEmpty())
 
-        val (insertedSecret, name) = App.database.withSession {
+        val (insertedSecret, name) = App.database.transaction {
             val row = PlayerTable.select { PlayerTable.id eq EntityID(response.info.id, PlayerTable) }.first()
             row[PlayerTable.secret] to row[PlayerTable.name]
         }

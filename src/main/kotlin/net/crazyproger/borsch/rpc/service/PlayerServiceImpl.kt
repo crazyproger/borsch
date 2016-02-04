@@ -11,8 +11,8 @@ import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequestDto
 import net.crazyproger.borsch.rpc.player.ShortInfoDto
 import java.sql.SQLException
-import kotlin.dao.EntityID
-import kotlin.sql.update
+import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.sql.update
 
 class PlayerServiceImpl : PlayerServiceGrpc.PlayerService {
 
@@ -23,7 +23,7 @@ class PlayerServiceImpl : PlayerServiceGrpc.PlayerService {
             responseObserver.onCompleted(ShortInfoDto())
 
     private fun ShortInfoDto(): ShortInfoDto {
-        val player = App.database.withSession { Player.findById(playerId) } ?: throw NotFoundException()
+        val player = App.database.transaction { Player.findById(playerId) } ?: throw NotFoundException()
         return ShortInfoDto.newBuilder().setId(playerId).setName(player.name).setMoney(player.money).build()
     }
 
@@ -36,7 +36,7 @@ class PlayerServiceImpl : PlayerServiceGrpc.PlayerService {
             throw RestrictedException()
         }
         try {
-            App.database.withSession {
+            App.database.transaction {
                 PlayerTable.update({ PlayerTable.id eq EntityID(playerId, PlayerTable) }) {
                     it[PlayerTable.name] = request.name
                 }

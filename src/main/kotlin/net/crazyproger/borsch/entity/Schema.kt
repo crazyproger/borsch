@@ -1,6 +1,6 @@
 package net.crazyproger.borsch.entity
 
-import kotlin.dao.IdTable
+import org.jetbrains.exposed.dao.IdTable
 
 val TABLES = arrayOf(PlayerTable, ItemTable, ItemTypeTable)
 

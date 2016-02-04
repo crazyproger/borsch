@@ -1,12 +1,12 @@
 package net.crazyproger.borsch.entity
 
-import kotlin.dao.Entity
-import kotlin.dao.EntityClass
-import kotlin.dao.EntityID
-import kotlin.sql.ColumnSet
-import kotlin.sql.JoinType
-import kotlin.sql.SizedIterable
-import kotlin.sql.join
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
+import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.sql.ColumnSet
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.SizedIterable
+import org.jetbrains.exposed.sql.join
 
 class Player(id: EntityID) : Entity(id) {
     var name by PlayerTable.name

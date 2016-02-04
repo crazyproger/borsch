@@ -17,7 +17,7 @@ class ProfileCreateServiceImpl : ProfileCreateServiceGrpc.ProfileCreateService {
 
     override fun create(request: Empty?, responseObserver: StreamObserver<CreateResponseDto>) {
         val secretString = UUID.randomUUID().toString()
-        val id = App.database.withSession {
+        val id = App.database.transaction {
             val newPlayer = Player.new {
                 money = 10 // todo  should be in config
                 secret = secretString
