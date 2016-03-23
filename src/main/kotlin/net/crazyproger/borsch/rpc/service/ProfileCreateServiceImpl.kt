@@ -10,24 +10,24 @@ import net.crazyproger.borsch.rpc.player.ShortInfoDto
 import org.jetbrains.exposed.sql.Database
 import java.util.*
 
-class ProfileCreateServiceImpl(database: Database) : ProfileCreateServiceGrpc.ProfileCreateService, AbstractService(database) {
-    companion object {
-        private val DEFAULT_SHORT_INFO: ShortInfoDto = ShortInfoDto.newBuilder().setMoney(10).setName("Player").build()
-    }
+class ProfileCreateServiceImpl(database: Database, val config: Config) : ProfileCreateServiceGrpc.ProfileCreateService, AbstractService(database) {
+
+    private val startMoney: Int by config.intVal()
+    private val namePrefix: String by config.stringVal()
 
     override fun create(request: Empty?, responseObserver: StreamObserver<CreateResponseDto>) {
-        val secretString = UUID.randomUUID().toString()
-        val id = database.transaction {
+        val player = database.transaction {
             val newPlayer = Player.new {
-                money = 10 // todo  should be in config
-                secret = secretString
+                money = startMoney
+                secret = UUID.randomUUID().toString()
+                name = ""
             }
             val id = newPlayer.id.value
-            newPlayer.name = "Player $id"
-            id
+            newPlayer.name = "$namePrefix $id"
+            newPlayer
         }
-        val info = ShortInfoDto.newBuilder(DEFAULT_SHORT_INFO).setId(id).build()
-        val builder = CreateResponseDto.newBuilder().setSecret(secretString).setInfo(info)
+        val info = ShortInfoDto.newBuilder().setMoney(player.money).setName(player.name).setId(player.id.value).build()
+        val builder = CreateResponseDto.newBuilder().setSecret(player.secret).setInfo(info)
         responseObserver.onCompleted(builder.build())
     }
 }

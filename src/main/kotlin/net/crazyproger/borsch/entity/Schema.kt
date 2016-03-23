@@ -2,7 +2,14 @@ package net.crazyproger.borsch.entity
 
 import org.jetbrains.exposed.dao.IdTable
 
-val TABLES = arrayOf(PlayerTable, ItemTable, ItemTypeTable)
+val TABLES = arrayOf(PlayerTable, ItemTable, ItemTypeTable, ConfigTable)
+
+object ConfigTable : IdTable() {
+    //    val prefix = varchar("prefix", 128)
+    val key = varchar("key", 1024).uniqueIndex()
+    val stringVal = varchar("string_val", 10240).nullable()
+    val intVal = integer("int_val").nullable()
+}
 
 object PlayerTable : IdTable() {
     val name = varchar("name", 255).index(true).nullable()

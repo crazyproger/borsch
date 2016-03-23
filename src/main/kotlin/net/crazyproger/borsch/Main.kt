@@ -1,6 +1,6 @@
 package net.crazyproger.borsch
 
-import io.grpc.Server
+import  io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.ServerInterceptors
 import net.crazyproger.borsch.entity.TABLES
@@ -11,10 +11,7 @@ import net.crazyproger.borsch.rpc.item.ItemsServiceGrpc
 import net.crazyproger.borsch.rpc.item.TypesServiceGrpc
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.ProfileCreateServiceGrpc
-import net.crazyproger.borsch.rpc.service.ItemsServiceImpl
-import net.crazyproger.borsch.rpc.service.PlayerServiceImpl
-import net.crazyproger.borsch.rpc.service.ProfileCreateServiceImpl
-import net.crazyproger.borsch.rpc.service.TypesServiceImpl
+import net.crazyproger.borsch.rpc.service.*
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -24,6 +21,7 @@ import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 
 private val log: Logger = LoggerFactory.getLogger("main")
+
 class App {
     companion object {
         private var _database: Database by Delegates.notNull<Database>()
@@ -38,8 +36,8 @@ class App {
     fun start() {
 
         val database = initDb()
-        // todo load config from database
-        startGrpc(database)
+        val config = Config(database)
+        startGrpc(database, config)
         _database = database
 
         registerShutdownHook()
@@ -65,10 +63,8 @@ class App {
         return database
     }
 
-    private fun classpathStream(path: String) = this@App.javaClass.getResourceAsStream(path)
-
-    private fun startGrpc(database: Database) {
-        val createDef = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateServiceImpl(database))
+    private fun startGrpc(database: Database, config: Config) {
+        val createDef = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateServiceImpl(database, config))
                 , *defaultInterceptors)
         val playerDef = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerServiceImpl(database))
                 , IdentificationInterceptor(database), *defaultInterceptors)
