@@ -40,9 +40,9 @@ class ItemsServiceTest : AbstractAppTest() {
         }
 
         App.database.transaction {
-            type1 = ItemType.new { name = "type 1"; price = 1 }.apply { ItemType.reload(this) }
-            type2 = ItemType.new { name = "type 2"; price = 2 }.apply { ItemType.reload(this) }
-            type3 = ItemType.new { name = "type 3"; price = 12 }.apply { ItemType.reload(this) }
+            type1 = ItemType.new { name = "type 1"; price = 1 }
+            type2 = ItemType.new { name = "type 2"; price = 2 }
+            type3 = ItemType.new { name = "type 3"; price = 12 }
             Item.new { type = type1; playerId = EntityID(this@ItemsServiceTest.playerId, PlayerTable) }
             Item.new { type = type2; playerId = EntityID(this@ItemsServiceTest.playerId, PlayerTable) }
             Item.new { type = type3; playerId = EntityID(this@ItemsServiceTest.playerId, PlayerTable) }

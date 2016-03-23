@@ -38,6 +38,12 @@ abstract class AbstractAppTest {
         var rawChannel by Delegates.notNull<Channel>()
         @JvmStatic @BeforeClass fun beforeClass() {
             app = App().apply { start() }
+
+            // todo should drop until initial database creation on app start eliminated
+            App.database.transaction {
+                drop(*TABLES)
+            }
+
             rawChannel = ManagedChannelBuilder.forAddress("localhost", app!!.port)
                     .usePlaintext(true).build()
         }

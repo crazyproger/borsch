@@ -60,6 +60,7 @@ class App {
 
         val properties = Properties().apply { load(classpathStream("/database-test.properties") ?: classpathStream("/database.properties")) }
         val database = Database.connect(properties["url"], properties["driver"], properties["user"] ?: "", properties["password"] ?: "")
+        // todo do not create tables on production start(migrations?)
         createTables(database)
         return database
     }

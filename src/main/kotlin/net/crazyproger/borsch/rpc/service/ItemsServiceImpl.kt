@@ -17,7 +17,7 @@ class ItemsServiceImpl(database: Database) : ItemsServiceGrpc.ItemsService, Abst
 
     override fun all(request: Empty, responseObserver: StreamObserver<ItemsDto>) {
         val items = database.transaction {
-            Item.view { ItemTable.playerId eq EntityID(playerId, PlayerTable) }.toList()
+            Item.find { ItemTable.playerId eq EntityID(playerId, PlayerTable) }.toList()
         }
         val dtos = items.map {
             ItemDto.newBuilder()
