@@ -3,18 +3,18 @@ package net.crazyproger.borsch.rpc.service
 import com.google.protobuf.Empty
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
-import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.Player
 import net.crazyproger.borsch.entity.PlayerTable
 import net.crazyproger.borsch.rpc.*
 import net.crazyproger.borsch.rpc.player.PlayerServiceGrpc
 import net.crazyproger.borsch.rpc.player.RenameRequestDto
 import net.crazyproger.borsch.rpc.player.ShortInfoDto
-import java.sql.SQLException
 import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.update
+import java.sql.SQLException
 
-class PlayerServiceImpl : PlayerServiceGrpc.PlayerService {
+class PlayerServiceImpl(database: Database) : PlayerServiceGrpc.PlayerService, AbstractService(database) {
 
     // todo think: simple, but not so flexible as with provider
     private val playerId: Int by PlayerIdProvider
@@ -23,7 +23,7 @@ class PlayerServiceImpl : PlayerServiceGrpc.PlayerService {
             responseObserver.onCompleted(ShortInfoDto())
 
     private fun ShortInfoDto(): ShortInfoDto {
-        val player = App.database.transaction { Player.findById(playerId) } ?: throw NotFoundException()
+        val player = database.transaction { Player.findById(playerId) } ?: throw NotFoundException()
         return ShortInfoDto.newBuilder().setId(playerId).setName(player.name).setMoney(player.money).build()
     }
 
@@ -36,7 +36,7 @@ class PlayerServiceImpl : PlayerServiceGrpc.PlayerService {
             throw RestrictedException()
         }
         try {
-            App.database.transaction {
+            database.transaction {
                 PlayerTable.update({ PlayerTable.id eq EntityID(playerId, PlayerTable) }) {
                     it[PlayerTable.name] = request.name
                 }

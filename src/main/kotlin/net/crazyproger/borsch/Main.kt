@@ -18,13 +18,14 @@ import net.crazyproger.borsch.rpc.service.TypesServiceImpl
 import org.jetbrains.exposed.sql.Database
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.sql.SQLException
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates
 
+private val log: Logger = LoggerFactory.getLogger("main")
 class App {
     companion object {
-        private val log: Logger = LoggerFactory.getLogger(App::class.java)
         private var _database: Database by Delegates.notNull<Database>()
         val database: Database get() {
             return _database
@@ -36,10 +37,15 @@ class App {
 
     fun start() {
 
-        initDb()
+        val database = initDb()
         // todo load config from database
-        startGrpc()
+        startGrpc(database)
+        _database = database
 
+        registerShutdownHook()
+    }
+
+    private fun registerShutdownHook() {
         Runtime.getRuntime().addShutdownHook(thread(start = false) {
             // Use stderr here since the logger may have been reset by its JVM shutdown hook.
             println("*** shutting down gRPC server since JVM is shutting down");
@@ -48,28 +54,27 @@ class App {
         });
     }
 
-    private fun initDb() {
-        Properties().apply {
-            load(classpathStream("/database-test.properties") ?: classpathStream("/database.properties"))
-            val database = Database.connect(getProperty("url"), getProperty("driver"), getProperty("user", ""), getProperty("password", ""))
-            database.transaction {
-                createMissingTablesAndColumns(*TABLES)
-            }
-            _database = database
-        }
+    private fun initDb(): Database {
+        operator fun Properties.get(key: String) = this.getProperty(key)
+        fun classpathStream(path: String) = this@App.javaClass.getResourceAsStream(path)
+
+        val properties = Properties().apply { load(classpathStream("/database-test.properties") ?: classpathStream("/database.properties")) }
+        val database = Database.connect(properties["url"], properties["driver"], properties["user"] ?: "", properties["password"] ?: "")
+        createTables(database)
+        return database
     }
 
     private fun classpathStream(path: String) = this@App.javaClass.getResourceAsStream(path)
 
-    private fun startGrpc() {
-        val createDef = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateServiceImpl())
-                , *defaultInterceptors())
-        val playerDef = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerServiceImpl())
-                , IdentificationInterceptor(database), *defaultInterceptors())
-        val itemsDef = ServerInterceptors.intercept(ItemsServiceGrpc.bindService(ItemsServiceImpl())
-                , IdentificationInterceptor(database), *defaultInterceptors())
-        val typesDef = ServerInterceptors.intercept(TypesServiceGrpc.bindService(TypesServiceImpl())
-                , *defaultInterceptors())
+    private fun startGrpc(database: Database) {
+        val createDef = ServerInterceptors.intercept(ProfileCreateServiceGrpc.bindService(ProfileCreateServiceImpl(database))
+                , *defaultInterceptors)
+        val playerDef = ServerInterceptors.intercept(PlayerServiceGrpc.bindService(PlayerServiceImpl(database))
+                , IdentificationInterceptor(database), *defaultInterceptors)
+        val itemsDef = ServerInterceptors.intercept(ItemsServiceGrpc.bindService(ItemsServiceImpl(database))
+                , IdentificationInterceptor(database), *defaultInterceptors)
+        val typesDef = ServerInterceptors.intercept(TypesServiceGrpc.bindService(TypesServiceImpl(database))
+                , *defaultInterceptors)
         server = ServerBuilder.forPort(port)
                 .addService(createDef)
                 .addService(playerDef)
@@ -79,11 +84,21 @@ class App {
         log.info("Server started, listening on " + port)
     }
 
-    private fun defaultInterceptors() = arrayOf(BusinessExceptionInterceptor, LoggingInterceptor)
+    private val defaultInterceptors = arrayOf(BusinessExceptionInterceptor, LoggingInterceptor)
 
     fun stop() = server?.shutdown()
 
     fun blockUntilShutdown() = server?.awaitTermination()
+}
+
+fun createTables(database: Database) {
+    try {
+        database.transaction {
+            createMissingTablesAndColumns(*TABLES)
+        }
+    } catch(e: SQLException) {
+        log.error("on create tables ", e) // SQLException when indexes are already exists
+    }
 }
 
 fun main(args: Array<String>) {

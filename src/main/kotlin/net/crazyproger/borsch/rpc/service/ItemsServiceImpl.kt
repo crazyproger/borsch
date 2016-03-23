@@ -2,7 +2,6 @@ package net.crazyproger.borsch.rpc.service
 
 import com.google.protobuf.Empty
 import io.grpc.stub.StreamObserver
-import net.crazyproger.borsch.App
 import net.crazyproger.borsch.entity.*
 import net.crazyproger.borsch.rpc.NoMoneyException
 import net.crazyproger.borsch.rpc.NotFoundException
@@ -10,13 +9,14 @@ import net.crazyproger.borsch.rpc.PlayerIdProvider
 import net.crazyproger.borsch.rpc.item.*
 import net.crazyproger.borsch.rpc.onCompleted
 import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.and
 
-class ItemsServiceImpl : ItemsServiceGrpc.ItemsService {
+class ItemsServiceImpl(database: Database) : ItemsServiceGrpc.ItemsService, AbstractService(database) {
     private val playerId: Int by PlayerIdProvider
 
     override fun all(request: Empty, responseObserver: StreamObserver<ItemsDto>) {
-        val items = App.database.transaction {
+        val items = database.transaction {
             Item.view { ItemTable.playerId eq EntityID(playerId, PlayerTable) }.toList()
         }
         val dtos = items.map {
@@ -30,7 +30,7 @@ class ItemsServiceImpl : ItemsServiceGrpc.ItemsService {
     }
 
     override fun buy(request: BuyRequestDto, responseObserver: StreamObserver<BuyResponseDto>) {
-        val (money, type, itemId) = App.database.transaction() {
+        val (money, type, itemId) = database.transaction() {
             val type = ItemType.findById(request.typeId) ?: throw NotFoundException()
 
             selectsForUpdate = true
@@ -49,7 +49,7 @@ class ItemsServiceImpl : ItemsServiceGrpc.ItemsService {
     }
 
     override fun sell(request: SellRequestDto, responseObserver: StreamObserver<SellResponseDto>) {
-        val money = App.database.transaction {
+        val money = database.transaction {
             val item = Item.find(
                     { (ItemTable.id eq EntityID(request.itemId, ItemTable)) and (ItemTable.playerId eq EntityID(playerId, PlayerTable)) }
             ).firstOrNull() ?: throw NotFoundException()
