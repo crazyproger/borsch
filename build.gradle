@@ -1,5 +1,4 @@
 buildscript {
-//    ext.kotlin_version = '1.0.0-rc-1047'
     repositories {
         maven {
             url 'https://dl.bintray.com/kotlin/kotlin-eap/'
@@ -107,4 +106,9 @@ idea {
         sourceDirs += file("${projectDir}/src/generated/main/java");
         sourceDirs += file("${projectDir}/src/generated/main/grpc");
     }
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "2.12"
 }
