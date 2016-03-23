@@ -1,12 +1,11 @@
 package net.crazyproger.borsch.entity
 
+import com.google.gson.GsonBuilder
+import org.jetbrains.exposed.dao.ColumnWithTransform
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.sql.ColumnSet
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.SizedIterable
-import org.jetbrains.exposed.sql.join
+import org.jetbrains.exposed.sql.*
 
 class Player(id: EntityID) : Entity(id) {
     var name by PlayerTable.name
@@ -37,3 +36,6 @@ class Item(id: EntityID) : Entity(id) {
             get() = table.join(ItemTypeTable, JoinType.INNER, ItemTable.typeId, ItemTypeTable.id)
     }
 }
+
+private val JSON = GsonBuilder().create()
+private inline fun <reified Target : Any> jsonToObject(column: Column<String>) = ColumnWithTransform<String, Target>(column, { JSON.toJson(it) }, { JSON.fromJson(it, Target::class.java) })
